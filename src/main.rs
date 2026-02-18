@@ -7,11 +7,11 @@ use {
 		panel::{TopBottomPanel, TopBottomSide},
 	},
 	std::collections::BTreeMap,
-};
-fn main() -> eframe::Result<()> {
-	eframe::run_native(
+};use eframe::run_native;use eframe::Result;use eframe::NativeOptions;use egui::Grid;use egui::RichText;
+fn main() -> Result<()> {
+	run_native(
 		"Dungeon Crawler",
-		eframe::NativeOptions::default(),
+		NativeOptions::default(),
 		Box::new(|_| Ok(Box::new(Game::new()))),
 	)
 }
@@ -117,11 +117,11 @@ impl App for Game {
 						format!("Def: {def}"),
 						format!("Gold: ${gold:.2}"),
 					] {
-						ui.label(egui::RichText::new(i));
+						ui.label(RichText::new(i));
 					}
 				}
 				Mode::Inv => {
-					egui::Grid::new(Id::NULL).show(ui, |ui| {
+					Grid::new(Id::NULL).show(ui, |ui| {
 						ui.heading("Inventory");
 						ui.end_row();
 						for (name, count) in &mut self.inv {
@@ -130,7 +130,7 @@ impl App for Game {
 									*count = count.saturating_sub(1);
 								}
 								for i in [format!("{count}"), "×".into(), format!("{name:?}")] {
-									ui.label(egui::RichText::new(i));
+									ui.label(RichText::new(i));
 								}
 								ui.end_row();
 							}
@@ -147,7 +147,7 @@ impl App for Game {
 								}
 							}
 							for i in [format!("{add}"), "×".into(), format!("{item:?}")] {
-								ui.label(egui::RichText::new(i));
+								ui.label(RichText::new(i));
 							}
 							ui.end_row();
 						}
