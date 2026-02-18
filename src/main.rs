@@ -7,9 +7,9 @@ use {
 		panel::{TopBottomPanel, TopBottomSide},
 	},
 	std::collections::BTreeMap,
-};use eframe::run_native;use eframe::Result;use eframe::NativeOptions;use egui::Grid;use egui::RichText;
+};use eframe::run_native as run;use eframe::Result;use eframe::NativeOptions;use egui::Grid;use egui::RichText;
 fn main() -> Result<()> {
-	run_native(
+	run(
 		"Dungeon Crawler",
 		NativeOptions::default(),
 		Box::new(|_| Ok(Box::new(Game::new()))),
