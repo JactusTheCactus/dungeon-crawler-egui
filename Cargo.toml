@@ -1,0 +1,10 @@
+[package]
+name = "dungeon-crawler"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.33.3"
+egui = "0.33.3"
+egui-winit = "0.33.3"
+egui_kittest = "0.33.3"
