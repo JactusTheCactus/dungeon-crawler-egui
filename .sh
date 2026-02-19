@@ -4,3 +4,4 @@ cargo +nightly fmt
 cargo clippy
 cargo check
 cargo run
+./view

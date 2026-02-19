@@ -1,3 +1,4 @@
 blank_lines_upper_bound = 0
 hard_tabs = true
 imports_granularity = "One"
+inline_attribute_width = 80
