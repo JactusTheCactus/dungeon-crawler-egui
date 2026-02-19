@@ -3,5 +3,5 @@ set -uo pipefail
 cargo +nightly fmt
 cargo clippy
 cargo check
-cargo run
+# cargo run
 ./view

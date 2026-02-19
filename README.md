@@ -25,6 +25,10 @@ Files are prefixed with a sigil to denote the content type.
 ```
 ## `&curmax.rs`
 ```rs
+use {
+	num_traits::ops::saturating::{SaturatingAdd, SaturatingMul, SaturatingSub},
+	std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+};
 #[derive(Debug, Default, Copy, Clone)]
 pub struct CurMax<T> {
 	pub cur: T,
@@ -42,6 +46,47 @@ impl<T: Copy + Ord> CurMax<T> {
 	}
 	pub fn get(&self) -> (T, T) {
 		(self.cur, self.max)
+	}
+}
+impl<
+	T: Copy
+		+ Ord
+		+ Add
+		+ AddAssign
+		+ Sub
+		+ SubAssign
+		+ Mul
+		+ MulAssign
+		+ Div<Output = T>
+		+ DivAssign
+		+ SaturatingAdd
+		+ SaturatingSub
+		+ SaturatingMul,
+> CurMax<T>
+{
+	pub fn add(&self, n: T) -> Self {
+		CurMax::new(self.cur.saturating_add(&n).min(self.max), self.max)
+	}
+	pub fn add_assign(&mut self, n: T) {
+		self.cur = self.add(n).cur;
+	}
+	pub fn sub(&self, n: T) -> Self {
+		CurMax::new(self.cur.saturating_sub(&n), self.max)
+	}
+	pub fn sub_assign(&mut self, n: T) {
+		self.cur = self.sub(n).cur;
+	}
+	pub fn mul(&self, n: T) -> Self {
+		CurMax::new(self.cur.saturating_mul(&n).min(self.max), self.max)
+	}
+	pub fn mul_assign(&mut self, n: T) {
+		self.cur = self.mul(n).cur;
+	}
+	pub fn div(&self, n: T) -> Self {
+		CurMax::new(self.cur / n, self.max)
+	}
+	pub fn div_assign(&mut self, n: T) {
+		self.cur = self.div(n).cur;
 	}
 }
 ```
@@ -158,40 +203,30 @@ impl App for Game {
 ## `game/update/$inv.rs`
 ```rs
 use {
-	crate::{
-		game::{
-			Game,
-			update::event::Event::{Drop, PickUp},
-		},
-		item::Item,
-	},
+	crate::{game::Game, item::Item},
 	eframe::egui::{Grid, Ui},
 };
 pub fn inv(game: &mut Game, ui: &mut Ui) {
 	Grid::new("inventory").show(ui, |ui| {
 		ui.heading("Inventory");
 		ui.end_row();
-		let mut events = vec![];
 		let items: Vec<(Item, u8)> = game.inv.iter().map(|(i, c)| (*i, *c)).collect();
 		for (item, count) in items {
 			ui.label(format!("{count} × {item:?}"));
 			if ui.button("Drop").clicked() {
-				events.push(Drop(item));
+				game.drop_item(item);
 			}
 			ui.end_row();
 		}
 		ui.end_row();
 		ui.heading("Nearby Items");
 		ui.end_row();
-		for (item, add) in &game.nearby {
+		for (item, add) in game.nearby.clone() {
 			ui.label(format!("{add} × {item:?}"));
 			if ui.button("Pick up").clicked() {
-				events.push(PickUp(*item, *add));
+				game.add_item(item, add);
 			}
 			ui.end_row();
-		}
-		for event in events {
-			game.events.push(event);
 		}
 	});
 }
@@ -202,11 +237,7 @@ use {
 	crate::{
 		game::{
 			Game,
-			update::{
-				event::Event::{Drop, PickUp},
-				inv::inv,
-				stats::stats,
-			},
+			update::{inv::inv, stats::stats},
 		},
 		mode::Mode::{Inv, Stats},
 	},
@@ -224,7 +255,6 @@ use {
 #[path = "$inv.rs"] pub mod inv;
 #[path = "$stats.rs"] pub mod stats;
 pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
-	game.events = vec![];
 	CentralPanel::default().show(ctx, |ui| {
 		TopBottomPanel::new(Top, "nav").show_inside(ui, |ui| {
 			ui.with_layout(Layout::left_to_right(Center), |ui| {
@@ -238,12 +268,6 @@ pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
 		match game.mode {
 			Stats => stats(game, ui),
 			Inv => inv(game, ui),
-		}
-		for event in game.events.clone() {
-			match event {
-				PickUp(item, add) => game.add_item(item, add),
-				Drop(item) => game.drop_item(item),
-			}
 		}
 	});
 }

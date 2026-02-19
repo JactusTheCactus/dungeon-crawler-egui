@@ -2,11 +2,7 @@ use {
 	crate::{
 		game::{
 			Game,
-			update::{
-				event::Event::{Drop, PickUp},
-				inv::inv,
-				stats::stats,
-			},
+			update::{inv::inv, stats::stats},
 		},
 		mode::Mode::{Inv, Stats},
 	},
@@ -24,7 +20,6 @@ use {
 #[path = "$inv.rs"] pub mod inv;
 #[path = "$stats.rs"] pub mod stats;
 pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
-	game.events = vec![];
 	CentralPanel::default().show(ctx, |ui| {
 		TopBottomPanel::new(Top, "nav").show_inside(ui, |ui| {
 			ui.with_layout(Layout::left_to_right(Center), |ui| {
@@ -38,12 +33,6 @@ pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
 		match game.mode {
 			Stats => stats(game, ui),
 			Inv => inv(game, ui),
-		}
-		for event in game.events.clone() {
-			match event {
-				PickUp(item, add) => game.add_item(item, add),
-				Drop(item) => game.drop_item(item),
-			}
 		}
 	});
 }
