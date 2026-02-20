@@ -3,5 +3,6 @@ set -uo pipefail
 cargo +nightly fmt
 cargo clippy
 cargo check
-# cargo run
-./view
+# cargo run &
+./view &
+wait
