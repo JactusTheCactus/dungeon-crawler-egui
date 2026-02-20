@@ -13,10 +13,10 @@ use {
 	eframe::{App, Frame, egui::Context},
 	std::collections::BTreeMap,
 };
-#[path = "$add.rs"] pub mod add;
-#[path = "$drop.rs"] pub mod drop;
-#[path = "$new.rs"] pub mod new;
-#[path = "update/$mod.rs"] pub mod update;
+pub mod add;
+pub mod drop;
+pub mod new;
+pub mod update;
 #[derive(Debug, Default)]
 pub struct Game {
 	pub mode: Mode,

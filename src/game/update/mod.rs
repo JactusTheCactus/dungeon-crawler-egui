@@ -6,19 +6,18 @@ use {
 		},
 		mode::Mode::{Inv, Stats},
 	},
-	TopBottomSide::Top,
 	eframe::{
 		Frame,
 		egui::{
 			Align::Center,
 			CentralPanel, Context, Layout,
-			panel::{TopBottomPanel, TopBottomSide},
+			panel::{TopBottomPanel, TopBottomSide::Top},
 		},
 	},
 };
-#[path = "#event.rs"] pub mod event;
-#[path = "$inv.rs"] pub mod inv;
-#[path = "$stats.rs"] pub mod stats;
+pub mod event;
+pub mod inv;
+pub mod stats;
 pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
 	CentralPanel::default().show(ctx, |ui| {
 		TopBottomPanel::new(Top, "nav").show_inside(ui, |ui| {

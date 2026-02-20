@@ -1,29 +1,24 @@
 # Thoughts?
-Files are prefixed with a sigil to denote the content type.
-- `#`: Enum
-- `&`: Struct
-- `$`: Function
-***
 ```tree
 /
-├── &curmax.rs
+├── curmax.rs
 ├── game/
-│   ├── $add.rs
-│   ├── $drop.rs
-│   ├── $new.rs
-│   ├── &mod.rs
+│   ├── add.rs
+│   ├── drop.rs
+│   ├── mod.rs
+│   ├── new.rs
 │   └── update/
-│       ├── $inv.rs
-│       ├── $mod.rs
-│       ├── $stats.rs
-│       └── #event.rs
-├── #item.rs
+│       ├── event.rs
+│       ├── inv.rs
+│       ├── mod.rs
+│       └── stats.rs
+├── item.rs
 ├── lib.rs
 ├── main.rs
-├── #mode.rs
-└── &stats.rs
+├── mode.rs
+└── stats.rs
 ```
-## `&curmax.rs`
+## `curmax.rs`
 ```rs
 use {
 	num_traits::ops::saturating::{SaturatingAdd, SaturatingMul, SaturatingSub},
@@ -90,7 +85,7 @@ impl<
 	}
 }
 ```
-## `game/$add.rs`
+## `game/add.rs`
 ```rs
 use {
 	crate::{game::Game, item::Item},
@@ -107,7 +102,7 @@ pub fn add_item(game: &mut Game, item: Item, add: u8) {
 	}
 }
 ```
-## `game/$drop.rs`
+## `game/drop.rs`
 ```rs
 use crate::game::{Game, Item};
 pub fn drop_item(game: &mut Game, item: Item) {
@@ -119,7 +114,53 @@ pub fn drop_item(game: &mut Game, item: Item) {
 	}
 }
 ```
-## `game/$new.rs`
+## `game/mod.rs`
+```rs
+use {
+	crate::{
+		game::{
+			add::add_item,
+			drop::drop_item,
+			new::new,
+			update::{event::Event, update},
+		},
+		item::Item,
+		mode::Mode,
+		stats::Stats,
+	},
+	eframe::{App, Frame, egui::Context},
+	std::collections::BTreeMap,
+};
+pub mod add;
+pub mod drop;
+pub mod new;
+pub mod update;
+#[derive(Debug, Default)]
+pub struct Game {
+	pub mode: Mode,
+	pub stats: Stats,
+	pub inv: BTreeMap<Item, u8>,
+	pub nearby: BTreeMap<Item, u8>,
+	pub events: Vec<Event>,
+}
+impl Game {
+	pub fn new() -> Self {
+		new()
+	}
+	pub fn add_item(&mut self, item: Item, add: u8) {
+		add_item(self, item, add);
+	}
+	pub fn drop_item(&mut self, item: Item) {
+		drop_item(self, item);
+	}
+}
+impl App for Game {
+	fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+		update(self, ctx, frame);
+	}
+}
+```
+## `game/new.rs`
 ```rs
 use {
 	crate::{
@@ -154,53 +195,16 @@ pub fn new() -> Game {
 	}
 }
 ```
-## `game/&mod.rs`
+## `game/update/event.rs`
 ```rs
-use {
-	crate::{
-		game::{
-			add::add_item,
-			drop::drop_item,
-			new::new,
-			update::{event::Event, update},
-		},
-		item::Item,
-		mode::Mode,
-		stats::Stats,
-	},
-	eframe::{App, Frame, egui::Context},
-	std::collections::BTreeMap,
-};
-#[path = "$add.rs"] pub mod add;
-#[path = "$drop.rs"] pub mod drop;
-#[path = "$new.rs"] pub mod new;
-#[path = "update/$mod.rs"] pub mod update;
-#[derive(Debug, Default)]
-pub struct Game {
-	pub mode: Mode,
-	pub stats: Stats,
-	pub inv: BTreeMap<Item, u8>,
-	pub nearby: BTreeMap<Item, u8>,
-	pub events: Vec<Event>,
-}
-impl Game {
-	pub fn new() -> Self {
-		new()
-	}
-	pub fn add_item(&mut self, item: Item, add: u8) {
-		add_item(self, item, add);
-	}
-	pub fn drop_item(&mut self, item: Item) {
-		drop_item(self, item);
-	}
-}
-impl App for Game {
-	fn update(&mut self, ctx: &Context, frame: &mut Frame) {
-		update(self, ctx, frame);
-	}
+use crate::item::Item;
+#[derive(Debug, Clone)]
+pub enum Event {
+	PickUp(Item, u8),
+	Drop(Item),
 }
 ```
-## `game/update/$inv.rs`
+## `game/update/inv.rs`
 ```rs
 use {
 	crate::{game::Game, item::Item},
@@ -231,7 +235,7 @@ pub fn inv(game: &mut Game, ui: &mut Ui) {
 	});
 }
 ```
-## `game/update/$mod.rs`
+## `game/update/mod.rs`
 ```rs
 use {
 	crate::{
@@ -241,19 +245,18 @@ use {
 		},
 		mode::Mode::{Inv, Stats},
 	},
-	TopBottomSide::Top,
 	eframe::{
 		Frame,
 		egui::{
 			Align::Center,
 			CentralPanel, Context, Layout,
-			panel::{TopBottomPanel, TopBottomSide},
+			panel::{TopBottomPanel, TopBottomSide::Top},
 		},
 	},
 };
-#[path = "#event.rs"] pub mod event;
-#[path = "$inv.rs"] pub mod inv;
-#[path = "$stats.rs"] pub mod stats;
+pub mod event;
+pub mod inv;
+pub mod stats;
 pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
 	CentralPanel::default().show(ctx, |ui| {
 		TopBottomPanel::new(Top, "nav").show_inside(ui, |ui| {
@@ -272,7 +275,7 @@ pub fn update(game: &mut Game, ctx: &Context, _frame: &mut Frame) {
 	});
 }
 ```
-## `game/update/$stats.rs`
+## `game/update/stats.rs`
 ```rs
 use {
 	crate::{game::Game, stats::Stats},
@@ -295,16 +298,7 @@ pub fn stats(game: &mut Game, ui: &mut Ui) {
 	ui.label(format!("Gold: ${gold:.2}"));
 }
 ```
-## `game/update/#event.rs`
-```rs
-use crate::item::Item;
-#[derive(Debug, Clone)]
-pub enum Event {
-	PickUp(Item, u8),
-	Drop(Item),
-}
-```
-## `#item.rs`
+## `item.rs`
 ```rs
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Item {
@@ -318,11 +312,11 @@ pub enum Item {
 ```
 ## `lib.rs`
 ```rs
-#[path = "&curmax.rs"] pub mod curmax;
-#[path = "game/&mod.rs"] pub mod game;
-#[path = "#item.rs"] pub mod item;
-#[path = "#mode.rs"] pub mod mode;
-#[path = "&stats.rs"] pub mod stats;
+pub mod curmax;
+pub mod game;
+pub mod item;
+pub mod mode;
+pub mod stats;
 ```
 ## `main.rs`
 ```rs
@@ -338,7 +332,7 @@ fn main() -> Result<()> {
 	)
 }
 ```
-## `#mode.rs`
+## `mode.rs`
 ```rs
 #[derive(Default, Debug)]
 pub enum Mode {
@@ -347,7 +341,7 @@ pub enum Mode {
 	Inv,
 }
 ```
-## `&stats.rs`
+## `stats.rs`
 ```rs
 use crate::curmax::CurMax;
 #[derive(Debug, Default)]
