@@ -1,19 +1,7 @@
 #!/usr/bin/env bash
 set -e
 exec > README.md
-declare -A sigils=(
-	[&]=Struct
-	[#]=Enum
-	[$]=Function
-)
 echo '# Thoughts?'
-echo \
-	Files are prefixed with a sigil \
-	to denote the content type.
-while read -r i
-	do echo "- \`$i\`: ${sigils[$i]}"
-done < <(printf '%s\n' "${!sigils[@]}" | sort)
-echo '***'
 printf '```tree\n%s\n```\n' \
 	"$(tree src -F --noreport | perl -pe 's|src||')"
 while read -r i
